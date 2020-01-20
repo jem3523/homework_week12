@@ -1,0 +1,24 @@
+{
+  "name": "homework_week12",
+  "version": "1.0.0",
+  "description": "SQL employee database",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jem3523/homework_week12.git"
+  },
+  "author": "Jason Miller",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/jem3523/homework_week12/issues"
+  },
+  "homepage": "https://github.com/jem3523/homework_week12#readme",
+  "dependencies": {
+    "console.table": "^0.10.0",
+    "inquirer": "^7.0.3",
+    "mysql": "^2.17.1"
+  }
+}
