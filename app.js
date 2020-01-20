@@ -61,6 +61,8 @@ function ask()
       "View employee",
       "View all employees",
       "Update employee role",
+      "Update employee manager",
+      "Delete employee",
       "Exit"
     ]
   })
@@ -96,7 +98,7 @@ function ask()
               message: "Enter the new role's title.",
               validate: function(value) 
               {
-                if (value === null || value =="") 
+                if (value === null || value =="" || value ==" ") 
                 {return false}
                 return true;
               }
@@ -148,7 +150,7 @@ function ask()
               message: "Enter the new employee's first name.",
               validate: function(value) 
               {
-                if (value === null || value =="") 
+                if (value === null || value =="" || value ==" ") 
                 {return false}
                 return true;
               }
@@ -159,7 +161,7 @@ function ask()
               message: "Enter the new employee's last name.",
               validate: function(value) 
               {
-                if (value === null || value =="") 
+                if (value === null || value =="" || value ==" ") 
                 {return false}
                 return true;
               }
@@ -235,7 +237,7 @@ function ask()
           start();
           break;
 
-      case "Updnpate employee role":
+      case "Update employee role":
         inquirer.prompt(
           [
             {
@@ -278,6 +280,69 @@ function ask()
             updateEmployeeRole(answer.empID, answer.newRoleID);
           })
         break;
+
+        case "Update employee manager":
+          inquirer.prompt(
+            [
+              {
+                name: "empID",
+                type: "input",
+                message: "Enter the employee's ID.",
+                validate: function(value) 
+                {
+                  if (isNaN(value) === false) 
+                  {return true;}
+                  return false;
+                }
+              },
+              {
+                name: "newManagerID",
+                type: "rawlist",
+                choices: async function() 
+                {
+                  var choiceArray = [];
+                  var results  = await getAll ("employee");
+                  for (var i = 0; i < results.length; i++) 
+                  {
+                    var string1 = results[i].id.toString();
+                    var string2 = ">> ";
+                    var string3 = results[i].first_name;
+                    var string4 = " ";
+                    var string5 = results[i].last_name;
+          
+                    var option = string1.concat(string2,string3,string4,string5);
+                    choiceArray.push(option);
+                  }
+                  return choiceArray;
+                },
+                message: "Select the new manager."
+              },
+  
+            ])
+            .then(function(answer) 
+            {
+              updateEmployeeManager(answer.empID, answer.newManagerID);
+            })
+          break;
+
+          case "Delete employee":
+            inquirer.prompt(
+              {
+                name: "employeeID",
+                type: "input",
+                message: "Enter the employee's ID.",
+                validate: function(value) 
+                {
+                  if (isNaN(value) === false) 
+                  {return true;}
+                  return false;
+                }
+              })
+              .then(function(answer) 
+              {
+                deleteEmployee(answer.employeeID);
+              })
+            break;
 
       case "Exit":
         exit();
@@ -417,5 +482,51 @@ function getAll (tableName)
       resolve(results);
     });
   })
+}
+
+function updateEmployeeManager(updateEmpID, updateNewManagerID)
+{
+  var sliceIndex = updateNewManagerID.indexOf(">>");
+  var updateNewManagerID = updateNewManagerID.slice(0, sliceIndex);
+
+  query = "UPDATE employee ";
+  query += "SET employee.manager_id = '" + updateNewManagerID + "' ";
+  query += "WHERE employee.id = '" + updateEmpID+ "';";
+
+  connection.query(query, function(err, res) 
+  {
+    console.log ("Manager ID " + updateNewManagerID + " is set as the manager for employee ID" + updateEmpID + ".");
+    console.log ();
+    ask()
+  });
+}
+
+function deleteEmployee(inputEmpID)
+{
+  query = "DELETE FROM employee WHERE employee.id = '" +  inputEmpID + "'; ";
+  connection.query(query, function(err, res) 
+  {
+    console.log (inputEmpID + " has been deleted as an employee.");
+    console.log ();
+    ask()
+  });
+}
+
+function confirmEmployeeID(inputEmployeeID)
+{
+  query  = "SELECT employee.id FROM employee WHERE employee.id = " + inputEmployeeID + ";"
+  connection.query(query, function(err, res) 
+  {
+
+  });
+}
+
+function confirmNotManager(inputManagerID)
+{
+  query  = "SELECT employee.manager_id FROM employee WHERE employee.manager_id = " + inputManagerID + ";"
+  connection.query(query, function(err, res) 
+  {
+
+  });
 }
 
