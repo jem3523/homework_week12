@@ -235,7 +235,7 @@ function ask()
           start();
           break;
 
-      case "Update employee role":
+      case "Updnpate employee role":
         inquirer.prompt(
           [
             {
