@@ -20,6 +20,8 @@ connection.connect(function(err)
 
 function start ()
 {
+  addRootEmployee();
+
   var query  = "DROP TABLE IF EXISTS employeelist ";
     query += "CREATE TABLE employeeList LIKE employee ";
     query += "INSERT INTO employeeList  SELECT * FROM employee;";
@@ -116,7 +118,7 @@ function ask()
             },
             {
               name: "departmentID",
-              type: "rawlist",
+              type: "list",
               choices: async function() 
               {
                 var choiceArray = [];
@@ -130,9 +132,25 @@ function ask()
                   var option = string1.concat(string2,string3);
                   choiceArray.push(option);
                 }
-                return choiceArray;
+
+                if (choiceArray.length > 0)
+                {return choiceArray}
+                else
+                {
+                  console.log()
+                  console.log("You must add departments before adding a role.")
+                  console.log("This entry will not be saved.")
+                  console.log()
+                  return choiceArray = []
+                }
               },
-              message: "Select the department ID associated with this role."
+              message: "Select the department ID associated with this role.",
+              validate: function(value) 
+              {
+                if (value === undefined) 
+                {return false;}
+                return true;
+              }
             }
           ])
           .then(function(answer2) 
@@ -168,7 +186,7 @@ function ask()
             },
             {
               name: "empRole",
-              type: "rawlist",
+              type: "list",
               choices: async function() 
               {
                 var choiceArray = [];
@@ -184,20 +202,49 @@ function ask()
                   var option = string1.concat(string2,string3,string4,string5);
                   choiceArray.push(option);
                 }
-                return choiceArray;
+
+                if (choiceArray.length > 0)
+                {return choiceArray}
+                else
+                {
+                  console.log()
+                  console.log("You must add roles before adding an employee.")
+                  console.log("This entry will not be saved.")
+                  console.log()
+                  return choiceArray = []
+                }
               },
-              message: "Select the new employee's role."
+              message: "Select the new employee's role.",
+              validate: function(value) 
+              {
+                if (value === undefined) 
+                {return false;}
+                return true;
+              }
             },
             {
               name: "empManager",
-              type: "input",
-              message: "Enter the unique ID of the new employee's manager.",
-              validate: function(value) 
+              type: "list",
+              message: "Selct the new employee's manager.",
+              choices: async function() 
               {
-                if (isNaN(value) === false) 
-                {return true;}
-                return false;
-              }
+                var choiceArray = [];
+                var results  = await getAll ("employee");
+
+                for (var i = 0; i < results.length; i++) 
+                {
+                  var string1 = results[i].id.toString();
+                  var string2 = ">> ";
+                  var string3 = results[i].first_name;
+                  var string4 = " ";
+                  var string5 = results[i].last_name;
+        
+                  var option = string1.concat(string2,string3,string4,string5);
+                  choiceArray.push(option);
+                }
+
+                return choiceArray;
+              },
             }
           ])
           .then(function(answer) 
@@ -220,10 +267,17 @@ function ask()
             name: "employeeID",
             type: "input",
             message: "Enter the employee's ID.",
-            validate: function(value) 
+            validate: async function(value) 
             {
-              if (isNaN(value) === false) 
-              {return true;}
+              var isThere = await confirmEmployeeID(value);
+              //console.log("returned: " + isThere)
+              if (isThere === true)
+              {
+                return true;
+              };
+              console.log();
+              console.log ("Not a valid employee ID. Please try again.")
+              console.log();
               return false;
             }
           })
@@ -244,16 +298,23 @@ function ask()
               name: "empID",
               type: "input",
               message: "Enter the employee's ID.",
-              validate: function(value) 
+              validate: async function(value) 
               {
-                if (isNaN(value) === false) 
-                {return true;}
+                var isThere = await confirmEmployeeID(value);
+                //console.log("returned: " + isThere)
+                if (isThere === true)
+                {
+                  return true;
+                };
+                console.log();
+                console.log ("Not a valid employee ID. Please try again.")
+                console.log();
                 return false;
               }
             },
             {
               name: "newRoleID",
-              type: "rawlist",
+              type: "list",
               choices: async function() 
               {
                 var choiceArray = [];
@@ -288,16 +349,23 @@ function ask()
                 name: "empID",
                 type: "input",
                 message: "Enter the employee's ID.",
-                validate: function(value) 
+                validate: async function(value) 
                 {
-                  if (isNaN(value) === false) 
-                  {return true;}
+                  var isThere = await confirmEmployeeID(value);
+                  //console.log("returned: " + isThere)
+                  if (isThere === true)
+                  {
+                    return true;
+                  };
+                  console.log();
+                  console.log ("Not a valid employee ID. Please try again.")
+                  console.log();
                   return false;
                 }
               },
               {
                 name: "newManagerID",
-                type: "rawlist",
+                type: "list",
                 choices: async function() 
                 {
                   var choiceArray = [];
@@ -331,11 +399,19 @@ function ask()
                 name: "employeeID",
                 type: "input",
                 message: "Enter the employee's ID.",
-                validate: function(value) 
+                validate: async function(value) 
                 {
-                  if (isNaN(value) === false) 
-                  {return true;}
-                  return false;
+                  var hasNoReports = await confirmNoReports(value);
+                  //console.log("returned: " + hasNoReports)
+                  if (hasNoReports === false)
+                  {
+                    console.log();
+                    console.log ("This employee is listed as manager for other employees.")
+                    console.log ("Update the direct reports to another manager before deletion.")
+                    console.log();
+                    return false;
+                  }; 
+                  return true;
                 }
               })
               .then(function(answer) 
@@ -435,6 +511,14 @@ function addEmployee(inputEmpFirst, inputEmpLast, inputEmpRole, inputEmpManager)
 {
   var sliceIndex = inputEmpRole.indexOf(">>");
   var inputEmpRole = inputEmpRole.slice(0, sliceIndex);
+
+  var sliceIndex2 = inputEmpManager.indexOf(">>");
+  var inputEmpManager = inputEmpManager.slice(0, sliceIndex2);
+
+  if(inputEmpManager == "pending")
+  {
+    inputEmpManager = 0
+  }
   
   query = "INSERT INTO employee (first_name, last_name, role_id, manager_id) "
   query += "VALUES ('" + inputEmpFirst + "' , '" + inputEmpLast + "' , '" + inputEmpRole + "' , '" + inputEmpManager + "'); ";
@@ -514,19 +598,56 @@ function deleteEmployee(inputEmpID)
 
 function confirmEmployeeID(inputEmployeeID)
 {
-  query  = "SELECT employee.id FROM employee WHERE employee.id = " + inputEmployeeID + ";"
-  connection.query(query, function(err, res) 
+  return new Promise(resolve => 
   {
-
-  });
+    query  = "SELECT employee.id FROM employee WHERE employee.id = " + inputEmployeeID + ";"
+    connection.query(query, function(err, res) 
+    {
+      if (err) {throw err};
+      if (res.length > 0)
+      {var noReports = true} //this employee exits.
+      else
+      {var noReports = false} //this employee does not exist.
+      resolve(noReports)
+    });
+  })
 }
 
-function confirmNotManager(inputManagerID)
+function confirmNoReports(inputManagerID)
 {
-  query  = "SELECT employee.manager_id FROM employee WHERE employee.manager_id = " + inputManagerID + ";"
-  connection.query(query, function(err, res) 
+  return new Promise(resolve => 
   {
+      query  = "SELECT employee.manager_id FROM employee WHERE employee.manager_id = '" + inputManagerID + "';"
+      connection.query(query, function(err, res) 
+      {
+        if (err) {throw err};
+        if (res.length < 1)
+        {
+          var noReports = true //this employee can be deleted.
+        }
+        else
+        {
+          var noReports = false //this employee still has direct reports.
+        }
+        resolve(noReports);
+      });
+  })
+}
 
-  });
+async function addRootEmployee()
+{
+  var isFirstEmployee = await getAll("employee");
+
+  if (isFirstEmployee.length < 1)
+  {
+    query = "INSERT INTO employee (first_name, last_name) VALUES ('Admin' , 'Root'); ";
+
+    connection.query(query, function(err, res) 
+    {
+      console.log();;
+    });
+  };
+
+
 }
 
