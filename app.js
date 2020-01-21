@@ -137,11 +137,12 @@ function ask()
                 {return choiceArray}
                 else
                 {
-                  console.log()
-                  console.log("You must add departments before adding a role.")
-                  console.log("This entry will not be saved.")
-                  console.log()
-                  return choiceArray = []
+                  console.log();
+                  console.log("You must add departments before adding a role.");
+                  console.log("This entry will not be saved.");
+                  console.log();
+                  exit();
+                  //return choiceArray = [];
                 }
               },
               message: "Select the department ID associated with this role.",
@@ -207,11 +208,12 @@ function ask()
                 {return choiceArray}
                 else
                 {
-                  console.log()
-                  console.log("You must add roles before adding an employee.")
-                  console.log("This entry will not be saved.")
-                  console.log()
-                  return choiceArray = []
+                  console.log();
+                  console.log("You must add roles before adding an employee.");
+                  console.log("This entry will not be saved.");
+                  console.log();
+                  exit();
+                  //return choiceArray = []
                 }
               },
               message: "Select the new employee's role.",
@@ -409,6 +411,7 @@ function ask()
                     console.log ("This employee is listed as manager for other employees.")
                     console.log ("Update the direct reports to another manager before deletion.")
                     console.log();
+                    exit();
                     return false;
                   }; 
                   return true;
@@ -647,7 +650,14 @@ async function addRootEmployee()
       console.log();;
     });
   };
-
-
 }
 
+function timedExit(miliseconds)
+{
+  return new Promise(resolve => 
+  {
+    setInterval(function()
+    {exit()},
+     miliseconds);
+  })
+}
