@@ -1,13 +1,14 @@
 var mysql = require("mysql");
 var inquirer = require("inquirer");
 var consoleTable = require ("console.table");
+var pw = require ("./security"); 
 
 var connection = mysql.createConnection(
 {
   host: "localhost",
   port: 3306,
   user: "root",
-  password: "Milroat@1",
+  password: pw,
   database: "company_db"
 });
 
@@ -17,9 +18,16 @@ connection.connect(function(err)
   start();
 });
 
-
+//This function auto-starts and establishes
+//1. a root employee
+//2. a copy of the employee table that is used for cross-check
+//3. the opening grid of all users
+//4. the initial inquery menu of options
 function start ()
 {
+  //checks to see if the employee table is empty.
+  //if it is, a root employee is added so that other employees have a placeholder
+  //employee to mark as manager.
   addRootEmployee();
 
   var query  = "DROP TABLE IF EXISTS employeelist ";
