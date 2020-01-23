@@ -1,22 +1,13 @@
 var mysql = require("mysql");
 var inquirer = require("inquirer");
 var consoleTable = require ("console.table");
-var pw = require ("./security"); 
 
-var connection = mysql.createConnection(
+var connection = {};
+function passConnection(passedConnection)
 {
-  host: "localhost",
-  port: 3306,
-  user: "root",
-  password: pw,
-  database: "company_db"
-});
-
-connection.connect(function(err) 
-{
-  if (err) throw err;
-  start();
-});
+  connection = passedConnection;
+}
+passConnection();
 
 //This function auto-starts and establishes
 //1. a root employee
@@ -422,7 +413,17 @@ function ask()
                     exit();
                     return false;
                   }; 
-                  return true;
+
+                  var isThere = await confirmEmployeeID(value);
+                  //console.log("returned: " + isThere)
+                  if (isThere === true)
+                  {
+                    return true;
+                  };
+                  console.log();
+                  console.log ("Not a valid employee ID. Please try again.")
+                  console.log();
+                  return false;
                 }
               })
               .then(function(answer) 
@@ -669,3 +670,5 @@ function timedExit(miliseconds)
      miliseconds);
   })
 }
+
+module.exports = {start, passConnection}
