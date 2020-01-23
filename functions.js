@@ -2,6 +2,7 @@ var mysql = require("mysql");
 var inquirer = require("inquirer");
 var consoleTable = require ("console.table");
 
+//this function passes the connection data into the function class
 var connection = {};
 function passConnection(passedConnection)
 {
@@ -11,7 +12,7 @@ passConnection();
 
 //This function auto-starts and establishes
 //1. a root employee
-//2. a copy of the employee table that is used for cross-check
+//2. a copy of the employee table that is used for cross-checks (employeeList)
 //3. the opening grid of all users
 //4. the initial inquery menu of options
 function start ()
@@ -21,7 +22,7 @@ function start ()
   //employee to mark as manager.
   addRootEmployee();
 
-  var query  = "DROP TABLE IF EXISTS employeelist ";
+  var query  = "DROP TABLE IF EXISTS employeeList ";
     query += "CREATE TABLE employeeList LIKE employee ";
     query += "INSERT INTO employeeList  SELECT * FROM employee;";
     
@@ -46,6 +47,7 @@ function start ()
   });
 }
 
+//this is the main navigation function. it gets re-called at the end of each selection so that the menu re-builds itself
 function ask()
 { 
   inquirer.prompt(
@@ -69,6 +71,7 @@ function ask()
   })
   .then(function(answer) 
   {
+    //this switch covers all 11 options
     switch (answer.action) 
     {
       case "Add department":
@@ -77,6 +80,7 @@ function ask()
             name: "departmentName",
             type: "input",
             message: "Enter the new department's name.",
+            //checking to see user returned without an entry (or just one space as an entry)
             validate: function(value) 
             {
               if (value === null || value =="") 
@@ -97,6 +101,7 @@ function ask()
               name: "roleName",
               type: "input",
               message: "Enter the new role's title.",
+              //checking to see user returned without an entry (or just one space as an entry)
               validate: function(value) 
               {
                 if (value === null || value =="" || value ==" ") 
@@ -108,6 +113,7 @@ function ask()
               name: "roleSalary",
               type: "input",
               message: "Enter the new role's salary. (Do NOT add commas or decimals.)",
+              //checking to see user entered a number
               validate: function(value) 
               {
                 if (isNaN(value) === false) 
@@ -118,10 +124,13 @@ function ask()
             {
               name: "departmentID",
               type: "list",
+              //this embedded function gets all department entries and returns them as a selection list
               choices: async function() 
               {
                 var choiceArray = [];
                 var results  = await getAll ("department");
+                //because the selection list doesn't support display v. actual values, we have to cut add actual id out of the display
+                //NOTE: once the option is selected and passed to the function, the function will need to cut the ID back off for usage
                 for (var i = 0; i < results.length; i++) 
                 {
                   var string1 = results[i].id.toString();
@@ -132,6 +141,8 @@ function ask()
                   choiceArray.push(option);
                 }
 
+                //if the department table is empty, then display a message and exit.
+                //Unfortunately, there is no way to gracefully exit and return the main selection choices, so user must exit.
                 if (choiceArray.length > 0)
                 {return choiceArray}
                 else
@@ -141,10 +152,10 @@ function ask()
                   console.log("This entry will not be saved.");
                   console.log();
                   exit();
-                  //return choiceArray = [];
                 }
               },
               message: "Select the department ID associated with this role.",
+              //if any value is entered other than from the selection list, do not accept it
               validate: function(value) 
               {
                 if (value === undefined) 
@@ -166,6 +177,7 @@ function ask()
               name: "empFirst",
               type: "input",
               message: "Enter the new employee's first name.",
+              //checking to see user returned without an entry (or just one space as an entry)
               validate: function(value) 
               {
                 if (value === null || value =="" || value ==" ") 
@@ -177,6 +189,7 @@ function ask()
               name: "empLast",
               type: "input",
               message: "Enter the new employee's last name.",
+              //checking to see user returned without an entry (or just one space as an entry)
               validate: function(value) 
               {
                 if (value === null || value =="" || value ==" ") 
@@ -191,6 +204,8 @@ function ask()
               {
                 var choiceArray = [];
                 var results  = await getAll ("role");
+                //because the selection list doesn't support display v. actual values, we have to cut add actual id out of the display
+                //NOTE: once the option is selected and passed to the function, the function will need to cut the ID back off for usage
                 for (var i = 0; i < results.length; i++) 
                 {
                   var string1 = results[i].id.toString();
@@ -203,6 +218,8 @@ function ask()
                   choiceArray.push(option);
                 }
 
+                //if the department table is empty, then display a message and exit.
+                //Unfortunately, there is no way to gracefully exit and return the main selection choices, so user must exit.
                 if (choiceArray.length > 0)
                 {return choiceArray}
                 else
@@ -216,6 +233,7 @@ function ask()
                 }
               },
               message: "Select the new employee's role.",
+              //if any value is entered other than from the selection list, do not accept it
               validate: function(value) 
               {
                 if (value === undefined) 
@@ -231,6 +249,8 @@ function ask()
               {
                 var choiceArray = [];
                 var results  = await getAll ("employee");
+                //because the selection list doesn't support display v. actual values, we have to cut add actual id out of the display
+                //NOTE: once the option is selected and passed to the function, the function will need to cut the ID back off for usage
 
                 for (var i = 0; i < results.length; i++) 
                 {
@@ -270,6 +290,7 @@ function ask()
             message: "Enter the employee's ID.",
             validate: async function(value) 
             {
+              //this function checks to see if the ID exists in the employees table
               var isThere = await confirmEmployeeID(value);
               //console.log("returned: " + isThere)
               if (isThere === true)
@@ -301,6 +322,7 @@ function ask()
               message: "Enter the employee's ID.",
               validate: async function(value) 
               {
+                //this function checks to see if the ID exists in the employees table
                 var isThere = await confirmEmployeeID(value);
                 //console.log("returned: " + isThere)
                 if (isThere === true)
@@ -320,6 +342,8 @@ function ask()
               {
                 var choiceArray = [];
                 var results  = await getAll ("role");
+                //because the selection list doesn't support display v. actual values, we have to cut add actual id out of the display
+                //NOTE: once the option is selected and passed to the function, the function will need to cut the ID back off for usage
                 for (var i = 0; i < results.length; i++) 
                 {
                   var string1 = results[i].id.toString();
@@ -352,6 +376,7 @@ function ask()
                 message: "Enter the employee's ID.",
                 validate: async function(value) 
                 {
+                  //this function checks to see if the ID exists in the employees table
                   var isThere = await confirmEmployeeID(value);
                   //console.log("returned: " + isThere)
                   if (isThere === true)
@@ -371,6 +396,8 @@ function ask()
                 {
                   var choiceArray = [];
                   var results  = await getAll ("employee");
+                //because the selection list doesn't support display v. actual values, we have to cut add actual id out of the display
+                //NOTE: once the option is selected and passed to the function, the function will need to cut the ID back off for usage
                   for (var i = 0; i < results.length; i++) 
                   {
                     var string1 = results[i].id.toString();
@@ -402,6 +429,7 @@ function ask()
                 message: "Enter the employee's ID.",
                 validate: async function(value) 
                 {
+                  //function checks the entered ID against the manager_id column to make sure no employee is left with an orphaned manager ID
                   var hasNoReports = await confirmNoReports(value);
                   //console.log("returned: " + hasNoReports)
                   if (hasNoReports === false)
@@ -413,7 +441,7 @@ function ask()
                     exit();
                     return false;
                   }; 
-
+                  //this function checks to see if the ID exists in the employees table
                   var isThere = await confirmEmployeeID(value);
                   //console.log("returned: " + isThere)
                   if (isThere === true)
@@ -449,7 +477,9 @@ function viewRole()
   {
     console.log ();
     console.log ();
+    //displays results in console
     console.table(res);
+    //re-launches the main selection menu
     ask()
   });
 }
@@ -463,11 +493,16 @@ function viewDepartment()
   {
     console.log ();
     console.log ();
+    //displays results in console
     console.table(res);
+    //re-launches the main selection menu
     ask()
   });
 }
 
+//each time the start function runs, it copies the employee table so that it can query against its own data
+//that table is called "employeeList"
+//this function runs after the inputEmployeeID has been validated in inquirer
 function viewEmployee(inputEmployeeID)
 {
   query  = "SELECT employee.id, employee.first_name, employee.last_name, ";
@@ -484,7 +519,9 @@ function viewEmployee(inputEmployeeID)
   {
     console.log ();
     console.log ();
+    //displays results in console
     console.table(res);
+    //re-launches the main selection menu
     ask();
   });
 }
@@ -498,12 +535,14 @@ function addDepartment(inputDepartmentName)
   {
     console.log (inputDepartmentName + " has been added as a department.");
     console.log ();
+    //re-launches the main selection menu
     ask()
   });
 }
 
 function addRole(inputRoleName, inputRoleSalary, inputDepartmentID)
 {
+  //the ID has to be cut off the display string sent by inquierer
   var sliceIndex = inputDepartmentID.indexOf(">>");
   var inputDepartmentID = inputDepartmentID.slice(0, sliceIndex);
 
@@ -514,6 +553,7 @@ function addRole(inputRoleName, inputRoleSalary, inputDepartmentID)
     {
       console.log (inputRoleName + " has been added as a role.");
       console.log ();
+      //re-launches the main selection menu
       ask()
     });
   //});
@@ -521,12 +561,14 @@ function addRole(inputRoleName, inputRoleSalary, inputDepartmentID)
 
 function addEmployee(inputEmpFirst, inputEmpLast, inputEmpRole, inputEmpManager)
 {
+  //the ID has to be cut off the display string sent by inquierer
   var sliceIndex = inputEmpRole.indexOf(">>");
   var inputEmpRole = inputEmpRole.slice(0, sliceIndex);
 
   var sliceIndex2 = inputEmpManager.indexOf(">>");
   var inputEmpManager = inputEmpManager.slice(0, sliceIndex2);
 
+  //just in case something goes wrong in the status, enter the "admin root" as manager
   if(inputEmpManager == "pending")
   {
     inputEmpManager = 0
@@ -539,12 +581,14 @@ function addEmployee(inputEmpFirst, inputEmpLast, inputEmpRole, inputEmpManager)
   {
     console.log (inputEmpFirst + " " + inputEmpLast + " has been added as an employee.");
     console.log ();
+    //re-launches the main selection menu
     ask()
   });
 }
 
 function updateEmployeeRole(updateEmpID, updateNewRoleID)
 {
+  //the ID has to be cut off the display string sent by inquierer
   var sliceIndex = updateNewRoleID.indexOf(">>");
   var updateNewRoleID = updateNewRoleID.slice(0, sliceIndex);
 
@@ -556,10 +600,12 @@ function updateEmployeeRole(updateEmpID, updateNewRoleID)
   {
     console.log ("The role for ID " + updateEmpID + " has been updated.");
     console.log ();
+    //re-launches the main selection menu
     ask()
   });
 }
 
+//this function closes the connection and exits
 function exit()
 {
   console.log("Exiting ...");
@@ -567,6 +613,39 @@ function exit()
   process.exit();
 }
 
+
+function updateEmployeeManager(updateEmpID, updateNewManagerID)
+{
+  //the ID has to be cut off the display string sent by inquierer
+  var sliceIndex = updateNewManagerID.indexOf(">>");
+  var updateNewManagerID = updateNewManagerID.slice(0, sliceIndex);
+
+  query = "UPDATE employee ";
+  query += "SET employee.manager_id = '" + updateNewManagerID + "' ";
+  query += "WHERE employee.id = '" + updateEmpID+ "';";
+
+  connection.query(query, function(err, res) 
+  {
+    console.log ("Manager ID " + updateNewManagerID + " is set as the manager for employee ID" + updateEmpID + ".");
+    console.log ();
+    //re-launches the main selection menu
+    ask()
+  });
+}
+
+function deleteEmployee(inputEmpID)
+{
+  query = "DELETE FROM employee WHERE employee.id = '" +  inputEmpID + "'; ";
+  connection.query(query, function(err, res) 
+  {
+    console.log (inputEmpID + " has been deleted as an employee.");
+    console.log ();
+    //re-launches the main selection menu
+    ask()
+  });
+}
+
+//this function requires a promise so that async-await can be used when it is run
 function getAll (tableName)
 {
   return new Promise(function(resolve, reject) 
@@ -580,34 +659,7 @@ function getAll (tableName)
   })
 }
 
-function updateEmployeeManager(updateEmpID, updateNewManagerID)
-{
-  var sliceIndex = updateNewManagerID.indexOf(">>");
-  var updateNewManagerID = updateNewManagerID.slice(0, sliceIndex);
-
-  query = "UPDATE employee ";
-  query += "SET employee.manager_id = '" + updateNewManagerID + "' ";
-  query += "WHERE employee.id = '" + updateEmpID+ "';";
-
-  connection.query(query, function(err, res) 
-  {
-    console.log ("Manager ID " + updateNewManagerID + " is set as the manager for employee ID" + updateEmpID + ".");
-    console.log ();
-    ask()
-  });
-}
-
-function deleteEmployee(inputEmpID)
-{
-  query = "DELETE FROM employee WHERE employee.id = '" +  inputEmpID + "'; ";
-  connection.query(query, function(err, res) 
-  {
-    console.log (inputEmpID + " has been deleted as an employee.");
-    console.log ();
-    ask()
-  });
-}
-
+//this function requires a promise so that async-await can be used when it is run
 function confirmEmployeeID(inputEmployeeID)
 {
   return new Promise(resolve => 
@@ -625,6 +677,7 @@ function confirmEmployeeID(inputEmployeeID)
   })
 }
 
+//this function requires a promise so that async-await can be used when it is run
 function confirmNoReports(inputManagerID)
 {
   return new Promise(resolve => 
@@ -646,10 +699,13 @@ function confirmNoReports(inputManagerID)
   })
 }
 
+//this function runs with "start" and checks to see if any employee exists. It will always run unless the tables have been seeded with data.
+//this is needed so that there is at least one option in the manager drop-down for adding employees (otherwise, the user cannot proceed)
 async function addRootEmployee()
 {
   var isFirstEmployee = await getAll("employee");
 
+  //it is checking to see if there is at least one row in the return, if not, it creates an admin user with no manager.
   if (isFirstEmployee.length < 1)
   {
     query = "INSERT INTO employee (first_name, last_name) VALUES ('Admin' , 'Root'); ";
@@ -661,14 +717,5 @@ async function addRootEmployee()
   };
 }
 
-function timedExit(miliseconds)
-{
-  return new Promise(resolve => 
-  {
-    setInterval(function()
-    {exit()},
-     miliseconds);
-  })
-}
 
 module.exports = {start, passConnection}

@@ -1,8 +1,6 @@
 var mysql = require("mysql");
-var inquirer = require("inquirer");
-var consoleTable = require ("console.table");
 var pw = require ("./security"); 
-var begin = require("./functions")
+var myFunction = require("./functions")
 
 var connection = mysql.createConnection(
 {
@@ -16,6 +14,6 @@ var connection = mysql.createConnection(
 connection.connect(function(err) 
 {
   if (err) throw err;
-  begin.passConnection(connection);
-  begin.start();
+  myFunction.passConnection(connection);
+  myFunction.start();
 });
