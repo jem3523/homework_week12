@@ -513,9 +513,9 @@ function viewEmployee(inputEmployeeID)
   query += "LEFT JOIN role ON employee.role_id = role.ID) ";
   query += "LEFT JOIN department ON role.department_id = department.ID) ";
   query += "LEFT JOIN employee AS employeeList ON employee.manager_id = employeeList.ID) ";
-  query += "WHERE employee.id = " + inputEmployeeID + ";"
+  query += "WHERE employee.id = ?;"
     
-  connection.query(query, function(err, res) 
+  connection.query(query,[inputEmployeeID], function(err, res) 
   {
     console.log ();
     console.log ();
@@ -528,10 +528,9 @@ function viewEmployee(inputEmployeeID)
 
 function addDepartment(inputDepartmentName)
 {
-  query = "INSERT INTO department (name) "
-  query += "VALUES ('" + inputDepartmentName + "');";
+  query = "INSERT INTO department (name) VALUES (?);";
 
-  connection.query(query, function(err, res) 
+  connection.query(query,[inputDepartmentName], function(err, res) 
   {
     console.log (inputDepartmentName + " has been added as a department.");
     console.log ();
@@ -547,9 +546,9 @@ function addRole(inputRoleName, inputRoleSalary, inputDepartmentID)
   var inputDepartmentID = inputDepartmentID.slice(0, sliceIndex);
 
     query = "INSERT INTO role (title, salary, department_id) "
-    query += "VALUES ('" + inputRoleName + "' , '" + inputRoleSalary + "' , '" + inputDepartmentID + "'); ";
+    query += "VALUES (? , ? , ?); ";
 
-    connection.query(query, function(err, res) 
+    connection.query(query, [inputRoleName,inputRoleSalary,inputDepartmentID], function(err, res) 
     {
       console.log (inputRoleName + " has been added as a role.");
       console.log ();
@@ -575,9 +574,9 @@ function addEmployee(inputEmpFirst, inputEmpLast, inputEmpRole, inputEmpManager)
   }
   
   query = "INSERT INTO employee (first_name, last_name, role_id, manager_id) "
-  query += "VALUES ('" + inputEmpFirst + "' , '" + inputEmpLast + "' , '" + inputEmpRole + "' , '" + inputEmpManager + "'); ";
+  query += "VALUES (?, ?, ?, ?);";
 
-  connection.query(query, function(err, res) 
+  connection.query(query, [inputEmpFirst,inputEmpLast,inputEmpRole,inputEmpManager], function(err, res) 
   {
     console.log (inputEmpFirst + " " + inputEmpLast + " has been added as an employee.");
     console.log ();
@@ -592,11 +591,9 @@ function updateEmployeeRole(updateEmpID, updateNewRoleID)
   var sliceIndex = updateNewRoleID.indexOf(">>");
   var updateNewRoleID = updateNewRoleID.slice(0, sliceIndex);
 
-  query = "UPDATE employee ";
-  query += "SET employee.role_id = '" + updateNewRoleID + "' ";
-  query += "WHERE employee.id = '" + updateEmpID+ "';";
+  query = "UPDATE employee SET employee.role_id = ? WHERE employee.id = ?;";
 
-  connection.query(query, function(err, res) 
+  connection.query(query, [updateNewRoleID,updateEmpID], function(err, res) 
   {
     console.log ("The role for ID " + updateEmpID + " has been updated.");
     console.log ();
@@ -620,11 +617,9 @@ function updateEmployeeManager(updateEmpID, updateNewManagerID)
   var sliceIndex = updateNewManagerID.indexOf(">>");
   var updateNewManagerID = updateNewManagerID.slice(0, sliceIndex);
 
-  query = "UPDATE employee ";
-  query += "SET employee.manager_id = '" + updateNewManagerID + "' ";
-  query += "WHERE employee.id = '" + updateEmpID+ "';";
+  query = "UPDATE employee SET employee.manager_id = ? WHERE employee.id = ?;";
 
-  connection.query(query, function(err, res) 
+  connection.query(query, [updateNewManagerID,updateEmpID], function(err, res) 
   {
     console.log ("Manager ID " + updateNewManagerID + " is set as the manager for employee ID" + updateEmpID + ".");
     console.log ();
@@ -635,8 +630,8 @@ function updateEmployeeManager(updateEmpID, updateNewManagerID)
 
 function deleteEmployee(inputEmpID)
 {
-  query = "DELETE FROM employee WHERE employee.id = '" +  inputEmpID + "'; ";
-  connection.query(query, function(err, res) 
+  query = "DELETE FROM employee WHERE employee.id = ?;";
+  connection.query(query,[inputEmpID], function(err, res) 
   {
     console.log (inputEmpID + " has been deleted as an employee.");
     console.log ();
@@ -664,8 +659,8 @@ function confirmEmployeeID(inputEmployeeID)
 {
   return new Promise(resolve => 
   {
-    query  = "SELECT employee.id FROM employee WHERE employee.id = " + inputEmployeeID + ";"
-    connection.query(query, function(err, res) 
+    query  = "SELECT employee.id FROM employee WHERE employee.id = ?;"
+    connection.query(query,[inputEmployeeID], function(err, res) 
     {
       if (err) {throw err};
       if (res.length > 0)
@@ -682,8 +677,8 @@ function confirmNoReports(inputManagerID)
 {
   return new Promise(resolve => 
   {
-      query  = "SELECT employee.manager_id FROM employee WHERE employee.manager_id = '" + inputManagerID + "';"
-      connection.query(query, function(err, res) 
+      query  = "SELECT employee.manager_id FROM employee WHERE employee.manager_id = ?;"
+      connection.query(query, [inputManagerID], function(err, res) 
       {
         if (err) {throw err};
         if (res.length < 1)
